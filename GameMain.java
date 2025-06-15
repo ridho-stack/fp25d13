@@ -3,7 +3,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 /**
- * Tic-Tac-Toe: Manchester Derby Edition with Player Name Input and Point System
+ * Tic-Tac-Toe with Player vs Player or vs AI mode.
  */
 public class GameMain extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -11,8 +11,8 @@ public class GameMain extends JPanel {
     public static final String TITLE = "Tic Tac Toe - Manchester Derby";
     public static final Color COLOR_BG = Color.WHITE;
     public static final Color COLOR_BG_STATUS = new Color(216, 216, 216);
-    public static final Color COLOR_CROSS = new Color(239, 105, 80);   // MU Red
-    public static final Color COLOR_NOUGHT = new Color(64, 154, 225);  // City Blue
+    public static final Color COLOR_CROSS = new Color(239, 105, 80);
+    public static final Color COLOR_NOUGHT = new Color(64, 154, 225);
     public static final Font FONT_STATUS = new Font("OCR A Extended", Font.PLAIN, 14);
 
     private Board board;
@@ -25,49 +25,33 @@ public class GameMain extends JPanel {
     private int playerXScore = 0, playerOScore = 0;
     private final int WINNING_SCORE = 3;
 
+    private enum GameMode { VS_PLAYER, VS_AI }
+    private GameMode gameMode;
+
     public GameMain() {
         super.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                int mouseX = e.getX();
-                int mouseY = e.getY();
+                if (currentState != State.PLAYING) {
+                    newGame();
+                    repaint();
+                    return;
+                }
+
+                int mouseX = e.getX(), mouseY = e.getY();
                 int row = mouseY / Cell.SIZE;
                 int col = mouseX / Cell.SIZE;
 
-                if (currentState == State.PLAYING) {
-                    if (row >= 0 && row < Board.ROWS && col >= 0 && col < Board.COLS
-                            && board.cells[row][col].content == Seed.NO_SEED) {
+                if (row >= 0 && row < Board.ROWS && col >= 0 && col < Board.COLS
+                        && board.cells[row][col].content == Seed.NO_SEED) {
 
-                        currentState = board.stepGame(currentPlayer, row, col);
-
-                        if (currentState == State.PLAYING) {
-                            SoundEffect.EAT_FOOD.play();
-                        } else {
-                            SoundEffect.DIE.play();
-                        }
-
-                        if (currentState == State.CROSS_WON) {
-                            playerXScore++;
-                            if (playerXScore == WINNING_SCORE) {
-                                JOptionPane.showMessageDialog(GameMain.this,
-                                        playerXName + " menang dengan skor 3 dan jadi pemenang utama!");
-                                resetGame();
-                                return;
-                            }
-                        } else if (currentState == State.NOUGHT_WON) {
-                            playerOScore++;
-                            if (playerOScore == WINNING_SCORE) {
-                                JOptionPane.showMessageDialog(GameMain.this,
-                                        playerOName + " menang dengan skor 3 dan jadi pemenang utama!");
-                                resetGame();
-                                return;
-                            }
-                        }
-
-                        currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+                    if (currentPlayer == Seed.CROSS || gameMode == GameMode.VS_PLAYER) {
+                        makeMove(row, col);
                     }
-                } else {
-                    newGame();
+                }
+
+                if (gameMode == GameMode.VS_AI && currentState == State.PLAYING && currentPlayer == Seed.NOUGHT) {
+                    aiMove();
                 }
 
                 repaint();
@@ -88,6 +72,7 @@ public class GameMain extends JPanel {
         super.setBorder(BorderFactory.createLineBorder(COLOR_BG_STATUS, 2, false));
 
         initGame();
+        chooseGameMode();
         inputPlayerNames();
         newGame();
     }
@@ -96,19 +81,33 @@ public class GameMain extends JPanel {
         board = new Board();
     }
 
+    public void chooseGameMode() {
+        Object[] options = {"vs Player", "vs AI"};
+        int choice = JOptionPane.showOptionDialog(null,
+                "Pilih mode permainan:", "Mode Permainan",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
+                null, options, options[0]);
+
+        gameMode = (choice == 1) ? GameMode.VS_AI : GameMode.VS_PLAYER;
+    }
+
     public void inputPlayerNames() {
         playerXName = JOptionPane.showInputDialog(null,
-                "Masukkan nama pemain untuk Manchester United (X):", "Input Nama Pemain",
-                JOptionPane.QUESTION_MESSAGE);
+                "Masukkan nama pemain Manchester United (X):",
+                "Nama Pemain", JOptionPane.QUESTION_MESSAGE);
         if (playerXName == null || playerXName.trim().isEmpty()) {
             playerXName = "Manchester United";
         }
 
-        playerOName = JOptionPane.showInputDialog(null,
-                "Masukkan nama pemain untuk Manchester City (O):", "Input Nama Pemain",
-                JOptionPane.QUESTION_MESSAGE);
-        if (playerOName == null || playerOName.trim().isEmpty()) {
-            playerOName = "Manchester City";
+        if (gameMode == GameMode.VS_PLAYER) {
+            playerOName = JOptionPane.showInputDialog(null,
+                    "Masukkan nama pemain Manchester City (O):",
+                    "Nama Pemain", JOptionPane.QUESTION_MESSAGE);
+            if (playerOName == null || playerOName.trim().isEmpty()) {
+                playerOName = "Manchester City";
+            }
+        } else {
+            playerOName = "AI - Manchester City";
         }
     }
 
@@ -121,14 +120,65 @@ public class GameMain extends JPanel {
 
         currentPlayer = Seed.CROSS;
         currentState = State.PLAYING;
+
+        if (gameMode == GameMode.VS_AI && currentPlayer == Seed.NOUGHT) {
+            aiMove();
+        }
+
         repaint();
     }
 
-    private void resetGame() {
+    public void resetGame() {
         playerXScore = 0;
         playerOScore = 0;
+        chooseGameMode();
         inputPlayerNames();
         newGame();
+    }
+
+    public void makeMove(int row, int col) {
+        if (board.cells[row][col].content != Seed.NO_SEED) return;
+
+        currentState = board.stepGame(currentPlayer, row, col);
+        if (currentState == State.PLAYING) {
+            SoundEffect.EAT_FOOD.play();
+        } else {
+            SoundEffect.DIE.play();
+        }
+
+        if (currentState == State.CROSS_WON) {
+            playerXScore++;
+            if (playerXScore == WINNING_SCORE) {
+                showWinner(playerXName);
+                return;
+            }
+        } else if (currentState == State.NOUGHT_WON) {
+            playerOScore++;
+            if (playerOScore == WINNING_SCORE) {
+                showWinner(playerOName);
+                return;
+            }
+        }
+
+        currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+    }
+
+    public void aiMove() {
+        // Simple AI: choose first available cell
+        for (int row = 0; row < Board.ROWS; ++row) {
+            for (int col = 0; col < Board.COLS; ++col) {
+                if (board.cells[row][col].content == Seed.NO_SEED) {
+                    makeMove(row, col);
+                    return;
+                }
+            }
+        }
+    }
+
+    public void showWinner(String winnerName) {
+        JOptionPane.showMessageDialog(this,
+                winnerName + " menang dengan skor 3 dan jadi pemenang utama!");
+        resetGame();
     }
 
     @Override
@@ -141,8 +191,7 @@ public class GameMain extends JPanel {
         if (currentState == State.PLAYING) {
             statusBar.setForeground(Color.BLACK);
             statusBar.setText((currentPlayer == Seed.CROSS ? playerXName : playerOName) + "'s Turn | "
-                    + playerXName + ": " + playerXScore + " vs "
-                    + playerOName + ": " + playerOScore);
+                    + playerXName + ": " + playerXScore + " vs " + playerOName + ": " + playerOScore);
         } else if (currentState == State.DRAW) {
             statusBar.setForeground(Color.RED);
             statusBar.setText("Imbang! Klik untuk main lagi.");
