@@ -82,9 +82,9 @@ public class GameMain extends JPanel {
     }
 
     public void chooseGameMode() {
-        Object[] options = {"vs Player", "vs AI"};
+        Object[] options = {"Menungso", "Komputer"};
         int choice = JOptionPane.showOptionDialog(null,
-                "Pilih mode permainan:", "Mode Permainan",
+                "Pengen Main ambek sopo ?", "Main Ambek Sopo?",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
                 null, options, options[0]);
 
@@ -93,16 +93,16 @@ public class GameMain extends JPanel {
 
     public void inputPlayerNames() {
         playerXName = JOptionPane.showInputDialog(null,
-                "Masukkan nama pemain Manchester United (X):",
-                "Nama Pemain", JOptionPane.QUESTION_MESSAGE);
+                "Lebokno Jeneng  pemain MU:",
+                "Jeneng Pemain", JOptionPane.QUESTION_MESSAGE);
         if (playerXName == null || playerXName.trim().isEmpty()) {
             playerXName = "Manchester United";
         }
 
         if (gameMode == GameMode.VS_PLAYER) {
             playerOName = JOptionPane.showInputDialog(null,
-                    "Masukkan nama pemain Manchester City (O):",
-                    "Nama Pemain", JOptionPane.QUESTION_MESSAGE);
+                    "Lebokno Jeneng  pemain City:",
+                    "Jeneng Pemain", JOptionPane.QUESTION_MESSAGE);
             if (playerOName == null || playerOName.trim().isEmpty()) {
                 playerOName = "Manchester City";
             }
@@ -177,7 +177,7 @@ public class GameMain extends JPanel {
 
     public void showWinner(String winnerName) {
         JOptionPane.showMessageDialog(this,
-                winnerName + " menang dengan skor 3 dan jadi pemenang utama!");
+                winnerName + " menang,skor e 3, Wayahe Tampil Bolo!");
         resetGame();
     }
 
@@ -190,17 +190,17 @@ public class GameMain extends JPanel {
 
         if (currentState == State.PLAYING) {
             statusBar.setForeground(Color.BLACK);
-            statusBar.setText((currentPlayer == Seed.CROSS ? playerXName : playerOName) + "'s Turn | "
+            statusBar.setText((currentPlayer == Seed.CROSS ? playerXName : playerOName) + " wayahe Tampil | "
                     + playerXName + ": " + playerXScore + " vs " + playerOName + ": " + playerOScore);
         } else if (currentState == State.DRAW) {
             statusBar.setForeground(Color.RED);
-            statusBar.setText("Imbang! Klik untuk main lagi.");
+            statusBar.setText("Imbang! Main Maneh.");
         } else if (currentState == State.CROSS_WON) {
             statusBar.setForeground(Color.RED);
-            statusBar.setText(playerXName + " menang ronde ini! Klik untuk lanjut.");
+            statusBar.setText(playerXName + " Menang,Wayahe Lanjut!!.");
         } else if (currentState == State.NOUGHT_WON) {
             statusBar.setForeground(Color.RED);
-            statusBar.setText(playerOName + " menang ronde ini! Klik untuk lanjut.");
+            statusBar.setText(playerOName + " Menang,Wayahe Lanjut!!.");
         }
     }
 
